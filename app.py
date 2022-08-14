@@ -221,7 +221,7 @@ def search_artists():
 
 @app.route("/artists/<int:artist_id>")
 def show_artist(artist_id):
-  data = Artist.query.filter_by(id=artist_id).first()
+  data = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time>datetime.now()).all()
 
   if not data:
         flash("Artist with ID " + str(artist_id) +
