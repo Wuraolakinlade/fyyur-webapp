@@ -105,26 +105,55 @@ def search_venues():
 
 @app.route("/venues/<int:venue_id>")
 def show_venue(venue_id):
-  data = Venue.query.filter_by(id=venue_id).first()
-
-  upcoming_shows = []
-  previous_shows = []
+  sing = db.session.query(Venue).filter(Venue.id == venue_id).all
+  data = {}
   
-  for show in data.show:
-    show_detail = {
-        "artist_id": show.artist_id, 
-        "artist_name": show.artist.name, 
-        "artist_image_link": show.artist.image_link, 
-        "start_time": show.start_time
+  coming_show = []
+  past_show = []
+  
+  for row in sing:
+    upcoming_shows =  row.shows.filter(Show.start_time > datetime.datetime.now())
+    previous_shows =  row.shows.filter(Show.start_time < datetime.datetime.now())
+    data.update(
+      {
+        "id": row.id,
+        "name": row.name,
+        "genres": row.genres.split(", "),
+        "city": row.city,
+        "state": row.state,
+        "phone": row.phone,
+        "website": row.website,
+        "facebook_link": row.facebook_link,
+        "seeking_venue": row.seeking_venue,
+        "seeking_description": row.seeking_description,
+        "image_link": row.image_link,
       }
-    if show.start_time > datetime.now():
-        upcoming_shows.append(show_detail)
-    else:
-        previous_shows.append(show_detail)
-  data.upcoming_shows = upcoming_shows
-  data.previous_shows = previous_shows
-  data.upcoming_shows_count = len(upcoming_shows)
-  data.previous_shows_count = len(previous_shows)
+    )
+  for show in upcoming_shows:
+            if len(upcoming_shows) == 0:
+                  data.update({"upcoming_shows": [],})
+            else:
+                  artist = db.session.query(Artist.name, Artist.image_link).filter(Artist.id == show.artist_id).one()
+                  coming_show.append({
+                  "artist_id": show.artist_id,
+                  "artist_name": artist.name,
+                  "artist_image_link": artist.image_link,
+                  "start_time": show.start_time.strftime('%m/%d/%Y'),
+                  })
+  for show in previous_shows:
+      if len(previous_shows) == 0:
+            data.update({"past_shows": [],})
+      else:
+            artist = db.session.query(Artist.name, Artist.image_link).filter(Artist.id == show.artist_id).one()
+            past_show.append({
+            "artist_id": show.artist_id,
+            "artist_name": artist.name,
+            "artist_image_link": artist.image_link,
+            "start_time": show.start_time.strftime('%m/%d/%Y'),
+            })
+      data.update({"upcoming_shows": coming_show})
+      data.update({"past_shows": past_show})
+      data.update({"past_shows_count": len(previous_shows), "upcoming_shows_count": len(upcoming_shows),})
   return render_template("pages/show_venue.html", venue=data)
 
 # Create Venue 
@@ -221,31 +250,55 @@ def search_artists():
 
 @app.route("/artists/<int:artist_id>")
 def show_artist(artist_id):
-  data = db.session.query(Show).join(Venue).filter(Show.artist_id==artist_id).filter(Show.start_time>datetime.now()).all()
-
-  if not data:
-        flash("Artist with ID " + str(artist_id) +
-              " was not found!", 'danger')
-        return redirect(url_for('artists'))
-
-  upcoming_shows = []
-  previous_shows = []
+  sing = db.session.query(Artist).filter(Artist.id == artist_id).all
+  data = {}
   
-  for show in data.show:
-    show_detail = {
-        "venue_id": show.venue_id, 
-        "venue_name": show.venue.name, 
-        "venue_image_link": show.venue.image_link, 
-        "start_time": show.start_time
+  coming_show = []
+  past_show = []
+  
+  for row in sing:
+    upcoming_shows =  row.shows.filter(Show.start_time > datetime.datetime.now())
+    previous_shows =  row.shows.filter(Show.start_time < datetime.datetime.now())
+    data.update(
+      {
+        "id": row.id,
+        "name": row.name,
+        "genres": row.genres.split(", "),
+        "city": row.city,
+        "state": row.state,
+        "phone": row.phone,
+        "website": row.website,
+        "facebook_link": row.facebook_link,
+        "seeking_venue": row.seeking_venue,
+        "seeking_description": row.seeking_description,
+        "image_link": row.image_link,
       }
-    if show.start_time > datetime.now():
-        upcoming_shows.append(show_detail)
-    else:
-        previous_shows.append(show_detail)
-  data.upcoming_shows = upcoming_shows
-  data.previous_shows = previous_shows
-  data.upcoming_shows_count = len(upcoming_shows)
-  data.previous_shows_count = len(previous_shows)
+    )
+  for show in upcoming_shows:
+            if len(upcoming_shows) == 0:
+                  data.update({"upcoming_shows": [],})
+            else:
+                  venue = db.session.query(Venue.name, Venue.image_link).filter(Venue.id == show.venue_id).one()
+                  coming_show.append({
+                  "venue_id": show.venue_id,
+                  "venue_name": venue.name,
+                  "venue_image_link": venue.image_link,
+                  "start_time": show.start_time.strftime('%m/%d/%Y'),
+                  })
+  for show in previous_shows:
+      if len(previous_shows) == 0:
+            data.update({"past_shows": [],})
+      else:
+            venue = db.session.query(Venue.name, Venue.image_link).filter(Venue.id == show.venue_id).one()
+            past_show.append({
+            "venue_id": show.venue_id,
+            "venue_name": venue.name,
+            "venue_image_link": venue.image_link,
+            "start_time": show.start_time.strftime('%m/%d/%Y'),
+            })
+      data.update({"upcoming_shows": coming_show})
+      data.update({"past_shows": past_show})
+      data.update({"past_shows_count": len(previous_shows), "upcoming_shows_count": len(upcoming_shows),})
   return render_template("pages/show_artist.html", artist=data)
 
 
